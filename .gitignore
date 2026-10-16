@@ -1,0 +1,27 @@
+# Visual Studio
+.vs/
+**/.vs/
+*.slnx.sqlite
+*.suo
+*.user
+
+# .NET build output
+**/bin/
+**/obj/
+TestResults/
+
+# Secrets and local configuration
+.env
+!.env.example
+*.pfx
+
+# Wayni: large / local data
+**/data/inbox/*
+!**/data/inbox/.gitkeep
+*.7z
+*.7Z
+**/db/backup/*.sql.gz
+
+# OS
+Thumbs.db
+Desktop.ini
