@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Microservice 1 - Importador de archivo: receives the BCRA file (POST /upload or a local path),
+       stores the original in S3 and queues the job in SQS. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.*" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Wayni.Deudores.Infrastructure\Wayni.Deudores.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

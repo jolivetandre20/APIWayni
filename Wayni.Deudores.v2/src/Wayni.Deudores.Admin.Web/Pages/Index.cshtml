@@ -1,0 +1,79 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Panel";
+}
+@section Head { <meta http-equiv="refresh" content="10" /> }
+
+<h1>Panel de importaciones</h1>
+@if (Model.Error is not null)
+{
+    <div class="alert bad">@Model.Error</div>
+}
+
+@if (Model.LastCompleted is { } last)
+{
+    <div class="grid">
+        <div class="card"><div class="muted">Último período</div><div class="kpi">@last.Periodo</div></div>
+        <div class="card"><div class="muted">Deudores</div><div class="kpi">@last.Deudores.ToString("N0")</div></div>
+        <div class="card"><div class="muted">Entidades</div><div class="kpi">@last.Entidades.ToString("N0")</div></div>
+        <div class="card"><div class="muted">Total préstamos (miles de $)</div><div class="kpi">@last.TotalPrestamos.ToString("N1")</div></div>
+        <div class="card"><div class="muted">Duración</div><div class="kpi">@IndexModel.FormatDuration(last.DuracionMs)</div></div>
+    </div>
+}
+
+<h2>Jobs <span class="muted">(se actualiza cada 10 s)</span></h2>
+<div class="table-wrap">
+    <table>
+        <thead>
+        <tr><th>Creado (UTC)</th><th>Archivo</th><th>Estado</th><th class="num">Líneas</th><th class="num">Deudores</th><th class="num">Duración</th><th></th></tr>
+        </thead>
+        <tbody>
+        @foreach (var job in Model.Jobs)
+        {
+            <tr>
+                <td>@job.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@job.FileName<div class="muted">@job.Id</div>@if (job.Error is not null) { <div class="muted">@job.Error</div> }</td>
+                <td><span class="badge @job.Status">@job.Status</span></td>
+                <td class="num">@job.LineasLeidas.ToString("N0")</td>
+                <td class="num">@job.Deudores.ToString("N0")</td>
+                <td class="num">@IndexModel.FormatDuration(job.DuracionMs)</td>
+                <td>
+                    @if (job.Status is "Failed" or "Completed")
+                    {
+                        <form method="post" asp-page-handler="Reprocess" asp-route-id="@job.Id"><button class="secondary">Reprocesar</button></form>
+                    }
+                </td>
+            </tr>
+        }
+        @if (Model.Jobs.Count == 0)
+        {
+            <tr><td colspan="7" class="muted">Sin importaciones todavía. Use «Importar».</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<h2>Notificaciones recibidas por webhook</h2>
+<div class="table-wrap">
+    <table>
+        <thead><tr><th>Recibido (UTC)</th><th>Job</th><th>Estado</th><th class="num">Deudores</th><th class="num">Entidades</th><th class="num">Duración</th></tr></thead>
+        <tbody>
+        @foreach (var item in Model.Notifications)
+        {
+            <tr>
+                <td>@item.ReceivedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@item.Notification.FileName<div class="muted">@item.Notification.JobId</div></td>
+                <td><span class="badge @item.Notification.Status">@item.Notification.Status</span></td>
+                <td class="num">@item.Notification.Deudores.ToString("N0")</td>
+                <td class="num">@item.Notification.Entidades.ToString("N0")</td>
+                <td class="num">@IndexModel.FormatDuration(item.Notification.DuracionMs)</td>
+            </tr>
+        }
+        @if (Model.Notifications.Count == 0)
+        {
+            <tr><td colspan="6" class="muted">Ninguna todavía.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

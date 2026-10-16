@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @RenderSection("Head", required: false)
+    <title>@ViewData["Title"] · Wayni Deudores BCRA</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+<header>
+    <strong>Wayni · Central de Deudores BCRA</strong>
+    <nav>
+        <a asp-page="/Index">Panel</a>
+        <a asp-page="/Upload">Importar</a>
+        <a asp-page="/Deudores">Deudores</a>
+        <a asp-page="/Entidades">Entidades</a>
+    </nav>
+</header>
+<main>
+    @RenderBody()
+</main>
+<footer>Montos en miles de pesos con un decimal (formato BCRA).</footer>
+</body>
+</html>

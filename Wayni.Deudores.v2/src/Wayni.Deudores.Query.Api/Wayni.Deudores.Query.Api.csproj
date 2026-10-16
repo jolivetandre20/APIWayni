@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Microservice 3 - API de consulta: GET /deudores/{cuit}, /entidades/{codigo}, /deudores/top/{n}. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.*" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Wayni.Deudores.Infrastructure\Wayni.Deudores.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

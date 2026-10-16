@@ -1,0 +1,48 @@
+@page
+@model UploadModel
+@{
+    ViewData["Title"] = "Importar";
+}
+<h1>Importar archivo del BCRA</h1>
+
+@if (Model.Message is not null)
+{
+    <div class="alert @(Model.Success ? "ok" : "bad")">@Model.Message</div>
+}
+
+<div class="card">
+    <h2>Subir archivo (POST /upload)</h2>
+    <p class="muted">Acepta <code>deudores.txt</code> o el archivo comprimido tal como lo publica el BCRA (<code>.7z</code> / <code>.zip</code>).
+        El original se guarda en S3 y el procesamiento se encola en SQS.</p>
+    <form method="post" enctype="multipart/form-data" asp-page-handler="Upload" class="inline">
+        <label>Archivo <input type="file" name="file" accept=".txt,.zip,.7z" required /></label>
+        <button>Subir e importar</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Importar desde la carpeta local (POST /import/local)</h2>
+    <p class="muted">Archivos copiados a <code>./data/inbox</code> del repositorio (montado en el contenedor del importador). Recomendado para archivos grandes.</p>
+    @if (Model.Inbox.Count == 0)
+    {
+        <p class="muted">La carpeta está vacía.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Archivo</th><th class="num">Tamaño</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var file in Model.Inbox)
+                {
+                    <tr>
+                        <td>@file.Name</td>
+                        <td class="num">@((file.SizeBytes / 1048576.0).ToString("N1")) MB</td>
+                        <td><form method="post" asp-page-handler="Local" asp-route-path="@file.Name"><button>Importar</button></form></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

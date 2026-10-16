@@ -1,0 +1,71 @@
+@page
+@model DeudoresModel
+@{
+    ViewData["Title"] = "Deudores";
+}
+<h1>Deudores</h1>
+@if (Model.Error is not null)
+{
+    <div class="alert bad">@Model.Error</div>
+}
+
+<div class="card">
+    <h2>Buscar por CUIT/CUIL (GET /deudores/{cuit})</h2>
+    <form method="get" class="inline">
+        <label>CUIT/CUIL (11 dígitos) <input name="cuit" value="@Model.Cuit" maxlength="11" pattern="[0-9A-Za-z]{11}" /></label>
+        <button>Buscar</button>
+    </form>
+    @if (Model.Deudor is { } d)
+    {
+        <table style="margin-top:1rem">
+            <tr><th>Nro. identificación</th><td>@d.NroIdentificacion</td></tr>
+            <tr><th>Situación máxima</th><td>@d.SituacionMaxima - @d.SituacionDescripcion</td></tr>
+            <tr><th>Suma total préstamos (miles de $)</th><td>@d.SumaTotalPrestamos.ToString("N1")</td></tr>
+            <tr><th>Registros (entidades que informan)</th><td>@d.CantidadRegistros</td></tr>
+            <tr><th>Período</th><td>@d.Periodo</td></tr>
+        </table>
+    }
+    else if (Model.Cuit is not null && Model.Error is null)
+    {
+        <p class="muted">No se encontró el deudor @Model.Cuit.</p>
+    }
+</div>
+
+<div class="card">
+    <h2>Top N por suma de préstamos (GET /deudores/top/{n})</h2>
+    <form method="get" class="inline">
+        <label>N <input type="number" name="n" min="1" max="1000" value="@Model.N" /></label>
+        <label>Situación
+            <select name="situacion">
+                <option value="">Todas</option>
+                @foreach (var s in Model.Situaciones)
+                {
+                    <option value="@s.Codigo" selected="@(Model.Situacion == s.Codigo)">@s.Codigo - @s.Descripcion</option>
+                }
+            </select>
+        </label>
+        <button>Consultar</button>
+    </form>
+</div>
+
+@if (Model.Top.Count > 0)
+{
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>#</th><th>CUIT/CUIL</th><th>Situación máxima</th><th class="num">Suma préstamos (miles de $)</th><th class="num">Registros</th></tr></thead>
+            <tbody>
+            @for (var i = 0; i < Model.Top.Count; i++)
+            {
+                var t = Model.Top[i];
+                <tr>
+                    <td>@(i + 1)</td>
+                    <td><a asp-page="/Deudores" asp-route-cuit="@t.NroIdentificacion">@t.NroIdentificacion</a></td>
+                    <td>@t.SituacionMaxima - @t.SituacionDescripcion</td>
+                    <td class="num">@t.SumaTotalPrestamos.ToString("N1")</td>
+                    <td class="num">@t.CantidadRegistros</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

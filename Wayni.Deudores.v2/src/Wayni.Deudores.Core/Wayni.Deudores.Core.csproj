@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Pure domain library: parser, aggregation rules and message contracts.
+       No NuGet dependencies, so every microservice can reuse it and it is trivially unit-testable. -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

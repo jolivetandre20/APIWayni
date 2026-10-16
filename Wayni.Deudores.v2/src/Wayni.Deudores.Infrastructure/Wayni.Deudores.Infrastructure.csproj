@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Adapters shared by the microservices: EF Core (MySQL), S3, SQS, notifications, archive reading. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- EF Core 9 + Pomelo 9 on net10.0: Pomelo has no EF Core 10 build yet (Oct 2026) and officially
+         supports running 9.x on .NET 10. Keep every EF Core package on 9.0.x to avoid NU1608/NU1107. -->
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.10" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.*" />
+    <PackageReference Include="AWSSDK.SQS" Version="3.7.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Wayni.Deudores.Core\Wayni.Deudores.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,113 @@
+# docker compose up --build
+# Services: MySQL, S3 emulator (S3Mock), SQS emulator (ElasticMQ), SMTP sink (Mailpit),
+# Migrator (one-shot), Importer API, Processor, Query API and Admin web.
+name: wayni-deudores
+
+x-dotnet-env: &dotnet-env
+  ASPNETCORE_ENVIRONMENT: Production
+  ConnectionStrings__Wayni: "Server=mysql;Port=3306;Database=${MYSQL_DATABASE};User=${MYSQL_USER};Password=${MYSQL_PASSWORD};AllowLoadLocalInfile=true;DefaultCommandTimeout=600"
+  Aws__Region: ${AWS_REGION}
+  Aws__AccessKey: ${AWS_ACCESS_KEY_ID}
+  Aws__SecretKey: ${AWS_SECRET_ACCESS_KEY}
+  Aws__S3__ServiceUrl: ${S3_SERVICE_URL}
+  Aws__S3__Bucket: ${S3_BUCKET}
+  Aws__Sqs__ServiceUrl: ${SQS_SERVICE_URL}
+  Aws__Sqs__QueueName: ${SQS_QUEUE}
+
+services:
+  mysql:
+    image: mysql:8.4
+    command: ["--local-infile=ON", "--innodb-buffer-pool-size=1G", "--max-allowed-packet=256M"]
+    env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports: ["${MYSQL_PORT:-3306}:3306"]
+    volumes: [mysql-data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # S3 emulator (Apache-2.0, no account or license). Bucket is created by the app on first use.
+  s3:
+    image: adobe/s3mock:3.12.0
+    environment:
+      retainFilesOnExit: "true"
+      root: /data
+    ports: ["9090:9090"]
+    volumes: [s3-data:/data]
+
+  # SQS emulator (Apache-2.0, no account or license). UI on http://localhost:9325.
+  sqs:
+    image: softwaremill/elasticmq-native:latest
+    volumes: ["./docker/elasticmq/elasticmq.conf:/opt/elasticmq.conf:ro"]
+    ports: ["9324:9324", "9325:9325"]
+
+  # SMTP sink for the completion e-mail. UI on http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ["8025:8025", "1025:1025"]
+
+  migrator:
+    build: { context: ., args: { PROJECT: Wayni.Deudores.Migrator } }
+    environment: *dotnet-env
+    depends_on:
+      mysql: { condition: service_healthy }
+    restart: "no"
+
+  importer-api:
+    build: { context: ., args: { PROJECT: Wayni.Deudores.Importer.Api } }
+    environment:
+      <<: *dotnet-env
+      Importer__InboxPath: /data/inbox
+    volumes: ["./data/inbox:/data/inbox:ro"]
+    ports: ["5101:8080"]
+    depends_on:
+      migrator: { condition: service_completed_successfully }
+      s3: { condition: service_started }
+      sqs: { condition: service_started }
+
+  processor:
+    build: { context: ., args: { PROJECT: Wayni.Deudores.Processor } }
+    environment:
+      <<: *dotnet-env
+      Processing__ExpectedDeudores: "25000000"
+      Notifications__Log: "true"
+      Notifications__Webhook__Url: http://admin-web:8080/webhooks/import-completed
+      Notifications__Webhook__Secret: ${WEBHOOK_SECRET}
+      Notifications__Email__Enabled: ${EMAIL_ENABLED}
+      Notifications__Email__Host: mailpit
+      Notifications__Email__Port: "1025"
+      Notifications__Email__From: ${EMAIL_FROM}
+      Notifications__Email__To: ${EMAIL_TO}
+    ports: ["5103:8080"]
+    depends_on:
+      migrator: { condition: service_completed_successfully }
+      s3: { condition: service_started }
+      sqs: { condition: service_started }
+      mailpit: { condition: service_started }
+
+  query-api:
+    build: { context: ., args: { PROJECT: Wayni.Deudores.Query.Api } }
+    environment: *dotnet-env
+    ports: ["5102:8080"]
+    depends_on:
+      migrator: { condition: service_completed_successfully }
+
+  admin-web:
+    build: { context: ., args: { PROJECT: Wayni.Deudores.Admin.Web } }
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Services__ImporterApi: http://importer-api:8080
+      Services__QueryApi: http://query-api:8080
+      Webhook__Secret: ${WEBHOOK_SECRET}
+    ports: ["5100:8080"]
+    depends_on: [importer-api, query-api]
+
+volumes:
+  mysql-data:
+  s3-data:

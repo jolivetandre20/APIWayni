@@ -1,0 +1,34 @@
+# Run the solution against the MySQL already installed on the host (e.g. "Local instance MySQL80")
+# instead of the mysql container.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.localmysql.yml up --build
+#
+# Prerequisites (once): run db/scripts/local-mysql80-setup.sql in MySQL Workbench (creates the app user,
+# grants it the wayni_deudores database and enables local_infile for the bulk import).
+# Requires Docker Compose 2.24+ (for !reset), included in current Docker Desktop.
+
+x-local-db: &local-db
+  ConnectionStrings__Wayni: "Server=${LOCAL_MYSQL_HOST:-host.docker.internal};Port=${LOCAL_MYSQL_PORT:-3306};Database=${MYSQL_DATABASE};User=${MYSQL_USER};Password=${MYSQL_PASSWORD};AllowLoadLocalInfile=true;DefaultCommandTimeout=600"
+
+services:
+  # The mysql container is not started (it would also collide with MySQL80 on port 3306).
+  # It can still be started explicitly with: docker compose --profile docker-mysql up mysql
+  mysql:
+    profiles: ["docker-mysql"]
+
+  migrator:
+    environment: *local-db
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on: !reset {}
+
+  importer-api:
+    environment: *local-db
+    extra_hosts: ["host.docker.internal:host-gateway"]
+
+  processor:
+    environment: *local-db
+    extra_hosts: ["host.docker.internal:host-gateway"]
+
+  query-api:
+    environment: *local-db
+    extra_hosts: ["host.docker.internal:host-gateway"]

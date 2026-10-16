@@ -1,0 +1,26 @@
+# Optional: replace S3Mock + ElasticMQ with LocalStack.
+#   docker compose -f docker-compose.yml -f docker-compose.localstack.yml up --build
+# Since March 2026 the current localstack/localstack image needs LOCALSTACK_AUTH_TOKEN (free Hobby
+# token for non-commercial use). The pinned 4.x tag predates that change; set the token in .env to
+# use a newer tag instead.
+services:
+  localstack:
+    image: localstack/localstack:4.4
+    environment:
+      SERVICES: s3,sqs
+      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN:-}
+    ports: ["4566:4566"]
+
+  importer-api:
+    environment:
+      Aws__S3__ServiceUrl: http://localstack:4566
+      Aws__Sqs__ServiceUrl: http://localstack:4566
+    depends_on:
+      localstack: { condition: service_started }
+
+  processor:
+    environment:
+      Aws__S3__ServiceUrl: http://localstack:4566
+      Aws__Sqs__ServiceUrl: http://localstack:4566
+    depends_on:
+      localstack: { condition: service_started }

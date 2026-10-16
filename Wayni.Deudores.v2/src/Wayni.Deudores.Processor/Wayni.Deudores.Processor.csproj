@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Microservice 2 - Procesador: consumes SQS, reads the file from S3, applies the business rules,
+       upserts MySQL and sends the completion notification. Exposes only /health. -->
+  <PropertyGroup>
+    <!-- One large dictionary: workstation GC keeps the footprint predictable inside a container. -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Wayni.Deudores.Infrastructure\Wayni.Deudores.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

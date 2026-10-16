@@ -1,0 +1,11 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+.env
+data/inbox/*
+!data/inbox/.gitkeep
+db/backup/*.sql.gz
+!db/backup/wayni_deudores_sample_backup.sql
+TestResults/

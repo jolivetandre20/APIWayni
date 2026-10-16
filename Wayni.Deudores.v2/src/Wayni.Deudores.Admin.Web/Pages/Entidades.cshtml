@@ -1,0 +1,50 @@
+@page
+@model EntidadesModel
+@{
+    ViewData["Title"] = "Entidades";
+}
+<h1>Entidades</h1>
+@if (Model.Error is not null)
+{
+    <div class="alert bad">@Model.Error</div>
+}
+
+<div class="card">
+    <h2>Buscar por código (GET /entidades/{codigo})</h2>
+    <form method="get" class="inline">
+        <label>Código de entidad <input type="number" name="codigo" value="@Model.Codigo" min="0" /></label>
+        <button>Buscar</button>
+    </form>
+    @if (Model.Entidad is { } e)
+    {
+        <table style="margin-top:1rem">
+            <tr><th>Código</th><td>@e.CodigoEntidad</td></tr>
+            <tr><th>Nombre</th><td>@(e.Nombre ?? "—")</td></tr>
+            <tr><th>Suma total préstamos (miles de $)</th><td>@e.SumaTotalPrestamos.ToString("N1")</td></tr>
+            <tr><th>Registros</th><td>@e.CantidadRegistros.ToString("N0")</td></tr>
+            <tr><th>Período</th><td>@(e.Periodo?.ToString() ?? "sin importar")</td></tr>
+        </table>
+    }
+    else if (Model.Codigo is not null && Model.Error is null)
+    {
+        <p class="muted">No existe la entidad @Model.Codigo.</p>
+    }
+</div>
+
+<h2>Entidades con mayor suma de préstamos</h2>
+<div class="table-wrap">
+    <table>
+        <thead><tr><th>Código</th><th>Nombre</th><th class="num">Suma préstamos (miles de $)</th><th class="num">Registros</th></tr></thead>
+        <tbody>
+        @foreach (var r in Model.Ranking)
+        {
+            <tr>
+                <td><a asp-page="/Entidades" asp-route-codigo="@r.CodigoEntidad">@r.CodigoEntidad</a></td>
+                <td>@r.Nombre</td>
+                <td class="num">@r.SumaTotalPrestamos.ToString("N1")</td>
+                <td class="num">@r.CantidadRegistros.ToString("N0")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
